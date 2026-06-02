@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Kasir | Sport Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* CSS Khusus untuk Fitur Cetak Struk */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #receiptContent, #receiptContent * {
+                visibility: visible;
+            }
+            #receiptContent {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                margin: 0;
+                padding: 10px;
+                box-shadow: none !important;
+                border: none !important;
+                background: white;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans h-screen flex flex-col overflow-hidden">
+
+    <header class="bg-blue-600 text-white p-4 shadow-md flex justify-between items-center z-10 no-print">
+        <h1 class="text-2xl font-bold flex items-center gap-2">
+            <i class="fa-solid fa-store"></i> Kasir Sport Center
+        </h1>
+        <div class="text-sm font-medium bg-blue-700 px-4 py-2 rounded-lg">
+            <i class="fa-solid fa-user"></i> Admin Kasir
+        </div>
+    </header>
+
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden no-print">
+        
+        <section class="w-full md:w-2/3 p-4 overflow-y-auto bg-gray-50">
+            <div class="mb-4 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-gray-700">Daftar Produk</h2>
+                <input type="text" id="searchInput" placeholder="Cari alat olahraga..." class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-1/2">
+            </div>
+            
+            <div id="productGrid" class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                </div>
+        </section>
+
+        <section class="w-full md:w-1/3 bg-white shadow-l flex flex-col border-l border-gray-200">
+            <div class="p-4 bg-gray-50 border-b border-gray-200">
+                <h2 class="text-lg font-bold text-gray-700 flex items-center gap-2">
+                    <i class="fa-solid fa-cart-shopping"></i> Keranjang Pesanan
+                </h2>
+            </div>
+            
+            <div id="cartItems" class="flex-1 overflow-y-auto p-4 space-y-3">
+                </div>
+
+            <div class="p-4 bg-gray-50 border-t border-gray-200">
+                <div class="flex justify-between font-bold text-xl text-gray-800 mb-4 pb-4 border-b border-gray-300">
+                    <span>Total</span>
+                    <span id="totalDisplay" class="text-blue-600">Rp 0</span>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Metode Pembayaran</label>
+                    <div class="flex gap-2">
+                        <label class="flex-1 border border-gray-300 rounded-lg p-2 cursor-pointer flex items-center justify-center gap-2 has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 transition-all">
+                            <input type="radio" name="payment_method" value="cash" class="hidden" checked onchange="togglePaymentMethod()">
+                            <i class="fa-solid fa-money-bill-wave text-green-600"></i> <span class="font-semibold text-gray-700">Cash</span>
+                        </label>
+                        <label class="flex-1 border border-gray-300 rounded-lg p-2 cursor-pointer flex items-center justify-center gap-2 has-[:checked]:bg-blue-50 has-[:checked]:border-blue-500 transition-all">
+                            <input type="radio" name="payment_method" value="dana" class="hidden" onchange="togglePaymentMethod()">
+                            <i class="fa-solid fa-wallet text-blue-500"></i> <span class="font-semibold text-gray-700">DANA</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="cashInputContainer" class="mb-4 block">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nominal Uang (Rp)</label>
+                    <input type="number" id="cashInput" placeholder="Contoh: 500000" class="w-full px-4 py-2 border border-gray-300 rounded-lg text-lg font-bold focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+
+                <div id="danaMessage" class="mb-4 hidden text-center p-3 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium">
+                    Pastikan pelanggan telah melakukan transfer ke nomor DANA toko sebelum memproses.
+                </div>
+
+                <button onclick="processPayment()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors flex justify-center items-center gap-2 shadow-md">
+                    <i class="fa-solid fa-check-circle"></i> Selesaikan Pembayaran
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <div id="receiptModal" class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+        <div id="receiptContent" class="bg-white rounded-lg p-6 w-96 max-w-[90%] shadow-2xl flex flex-col">
+            
+            <div class="text-center mb-4 border-b border-dashed border-gray-300 pb-4">
+                <div class="w-12 h-12 bg-gray-900 text-white rounded-full flex items-center justify-center mx-auto mb-2 no-print">
+                    <i class="fa-solid fa-receipt text-xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 uppercase tracking-wider">Sport Center</h3>
+                <p class="text-xs text-gray-500">Jl. Olahraga No. 123, Indonesia</p>
+                <p class="text-xs text-gray-500 mt-1" id="receiptDate"></p>
+            </div>
+
+            <div id="receiptItems" class="text-sm text-gray-600 mb-4 space-y-2 border-b border-dashed border-gray-300 pb-4">
+                </div>
+
+            <div id="receiptDetails" class="space-y-1 mb-6 text-sm text-gray-600">
+                </div>
+
+            <div class="text-center text-xs text-gray-400 mt-auto pt-4">
+                Terima kasih atas kunjungan Anda!
+            </div>
+
+            <div class="mt-6 flex gap-2 no-print">
+                <button onclick="window.print()" class="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold py-2 px-4 rounded-lg transition-colors flex justify-center items-center gap-2">
+                    <i class="fa-solid fa-print"></i> Cetak
+                </button>
+                <button onclick="closeReceipt()" class="flex-1 bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded-lg transition-colors">
+                    Selesai
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const products = [
+            { id: 1, name: "Sepatu Bola Ortuseight", price: 450000, icon: "fa-shoe-prints", color: "bg-orange-500" },
+            { id: 2, name: "Bola Basket Spalding", price: 350000, icon: "fa-basketball", color: "bg-orange-600" },
+            { id: 3, name: "Raket Badminton Yonex", price: 850000, icon: "fa-table-tennis-paddle-ball", color: "bg-red-500" },
+            { id: 4, name: "Bola Sepak Adidas", price: 300000, icon: "fa-futbol", color: "bg-gray-800" },
+            { id: 5, name: "Dumbbell 5kg (Sepasang)", price: 150000, icon: "fa-dumbbell", color: "bg-slate-600" },
+            { id: 6, name: "Jersey Timnas Indonesia", price: 250000, icon: "fa-shirt", color: "bg-red-600" },
+            { id: 7, name: "Matras Yoga Speeds", price: 120000, icon: "fa-person-praying", color: "bg-purple-500" },
+            { id: 8, name: "Sarung Tinju Everlast", price: 400000, icon: "fa-mitten", color: "bg-red-700" },
+            { id: 9, name: "Kacamata Renang Speedo", price: 180000, icon: "fa-glasses", color: "bg-blue-400" },
+        ];
+
+        let cart = [];
+
+        const formatRupiah = (number) => {
+            return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(number);
+        };
+
+        const renderProducts = (searchQuery = "") => {
+            const grid = document.getElementById("productGrid");
+            grid.innerHTML = "";
+            const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+            filteredProducts.forEach(product => {
+                const card = document.createElement("div");
+                card.className = "bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md cursor-pointer transition-all active:scale-95 flex flex-col items-center text-center";
+                card.onclick = () => addToCart(product.id);
+                
+                card.innerHTML = `
+                    <div class="w-16 h-16 ${product.color} text-white rounded-full flex items-center justify-center text-2xl mb-3 shadow-inner">
+                        <i class="fa-solid ${product.icon}"></i>
+                    </div>
+                    <h3 class="font-semibold text-gray-800 text-sm mb-1 leading-tight h-10">${product.name}</h3>
+                    <p class="text-blue-600 font-bold">${formatRupiah(product.price)}</p>
+                `;
+                grid.appendChild(card);
+            });
+        };
+
+        const addToCart = (productId) => {
+            const product = products.find(p => p.id === productId);
+            const existingItem = cart.find(item => item.id === productId);
+            if (existingItem) existingItem.qty += 1;
+            else cart.push({ ...product, qty: 1 });
+            updateCartUI();
+        };
+
+        const changeQty = (productId, delta) => {
+            const itemIndex = cart.findIndex(item => item.id === productId);
+            if (itemIndex > -1) {
+                cart[itemIndex].qty += delta;
+                if (cart[itemIndex].qty <= 0) cart.splice(itemIndex, 1);
+                updateCartUI();
+            }
+        };
+
+        const updateCartUI = () => {
+            const cartContainer = document.getElementById("cartItems");
+            let total = 0;
+
+            if (cart.length === 0) {
+                cartContainer.innerHTML = `
+                    <div class="text-center text-gray-400 mt-10">
+                        <i class="fa-solid fa-basket-shopping text-4xl mb-2"></i>
+                        <p>Keranjang kosong</p>
+                    </div>`;
+                document.getElementById("totalDisplay").innerText = "Rp 0";
+                return;
+            }
+
+            cartContainer.innerHTML = "";
+            cart.forEach(item => {
+                const subtotalItem = item.price * item.qty;
+                total += subtotalItem;
+                const cartRow = document.createElement("div");
+                cartRow.className = "flex justify-between items-center p-3 bg-white border border-gray-100 rounded-lg shadow-sm";
+                cartRow.innerHTML = `
+                    <div class="flex-1">
+                        <h4 class="text-sm font-bold text-gray-800 line-clamp-1">${item.name}</h4>
+                        <p class="text-xs text-gray-500">${formatRupiah(item.price)}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center bg-gray-100 rounded-lg">
+                            <button onclick="changeQty(${item.id}, -1)" class="w-8 h-8 text-gray-600 hover:bg-gray-200 rounded-l-lg font-bold">-</button>
+                            <span class="w-8 text-center text-sm font-bold">${item.qty}</span>
+                            <button onclick="changeQty(${item.id}, 1)" class="w-8 h-8 text-gray-600 hover:bg-gray-200 rounded-r-lg font-bold">+</button>
+                        </div>
+                    </div>
+                `;
+                cartContainer.appendChild(cartRow);
+            });
+
+            document.getElementById("totalDisplay").innerText = formatRupiah(total);
+        };
+
+        // Ganti UI Input berdasarkan Metode Pembayaran
+        const togglePaymentMethod = () => {
+            const method = document.querySelector('input[name="payment_method"]:checked').value;
+            const cashContainer = document.getElementById("cashInputContainer");
+            const danaMessage = document.getElementById("danaMessage");
+
+            if (method === 'dana') {
+                cashContainer.classList.add("hidden");
+                cashContainer.classList.remove("block");
+                danaMessage.classList.remove("hidden");
+                danaMessage.classList.add("block");
+            } else {
+                cashContainer.classList.remove("hidden");
+                cashContainer.classList.add("block");
+                danaMessage.classList.add("hidden");
+                danaMessage.classList.remove("block");
+            }
+        };
+
+        const processPayment = () => {
+            if (cart.length === 0) {
+                alert("Keranjang masih kosong!");
+                return;
+            }
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const method = document.querySelector('input[name="payment_method"]:checked').value;
+            let receiptDetailsHTML = "";
+
+            if (method === 'cash') {
+                const cashInput = document.getElementById("cashInput").value;
+                const cash = parseInt(cashInput);
+                if (!cashInput || isNaN(cash) || cash < total) {
+                    alert(`Uang tidak cukup! Total tagihan: ${formatRupiah(total)}`);
+                    return;
+                }
+                const change = cash - total;
+                receiptDetailsHTML = `
+                    <div class="flex justify-between"><span>Metode Pembayaran:</span><span class="font-semibold uppercase">Tunai (Cash)</span></div>
+                    <div class="flex justify-between"><span>Subtotal:</span><span>${formatRupiah(total)}</span></div>
+                    <div class="flex justify-between"><span>Tunai:</span><span>${formatRupiah(cash)}</span></div>
+                    <div class="flex justify-between text-base font-bold text-gray-800 mt-2 pt-2 border-t border-gray-200">
+                        <span>Kembalian:</span><span>${formatRupiah(change)}</span>
+                    </div>
+                `;
+            } else if (method === 'dana') {
+                receiptDetailsHTML = `
+                    <div class="flex justify-between"><span>Metode Pembayaran:</span><span class="font-bold text-blue-600 uppercase">E-Wallet (DANA)</span></div>
+                    <div class="flex justify-between"><span>Subtotal:</span><span>${formatRupiah(total)}</span></div>
+                    <div class="flex justify-between text-base font-bold text-green-600 mt-2 pt-2 border-t border-gray-200">
+                        <span>Status:</span><span>LUNAS</span>
+                    </div>
+                `;
+            }
+
+            // Menyusun daftar barang di struk
+            const receiptItemsContainer = document.getElementById("receiptItems");
+            receiptItemsContainer.innerHTML = cart.map(item => `
+                <div class="flex justify-between">
+                    <span class="w-2/3 truncate">${item.qty}x ${item.name}</span>
+                    <span class="w-1/3 text-right">${formatRupiah(item.price * item.qty)}</span>
+                </div>
+            `).join('');
+
+            // Waktu Struk
+            const now = new Date();
+            document.getElementById("receiptDate").innerText = now.toLocaleString('id-ID', { dateStyle: 'long', timeStyle: 'short' });
+
+            document.getElementById("receiptDetails").innerHTML = receiptDetailsHTML;
+            document.getElementById("receiptModal").classList.remove("hidden");
+            document.getElementById("receiptModal").classList.add("flex");
+        };
+
+        const closeReceipt = () => {
+            document.getElementById("receiptModal").classList.add("hidden");
+            document.getElementById("receiptModal").classList.remove("flex");
+            cart = [];
+            document.getElementById("cashInput").value = "";
+            document.querySelector('input[value="cash"]').checked = true; // Reset to cash
+            togglePaymentMethod();
+            updateCartUI();
+        };
+
+        document.getElementById("searchInput").addEventListener("input", (e) => {
+            renderProducts(e.target.value);
+        });
+
+        renderProducts();
+    </script>
+</body>
+</html>
